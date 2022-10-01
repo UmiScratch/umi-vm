@@ -8,7 +8,7 @@ const Timer = require('../util/timer');
  */
 
 class BlockUtility {
-    constructor (sequencer = null, thread = null) {
+    constructor (sequencer = null, thread = null, block) {
         /**
          * A sequencer block primitives use to branch or start procedures with
          * @type {?Sequencer}
@@ -21,6 +21,8 @@ class BlockUtility {
          * @type {?Thread}
          */
         this.thread = thread;
+        
+        this.currentBlock = block;
 
         this._nowObj = {
             now: () => this.sequencer.runtime.currentMSecs
@@ -67,6 +69,10 @@ class BlockUtility {
         return frame.executionContext;
     }
 
+    get currentBlockId () {
+        return this.currentBlock.id;
+    }
+    
     /**
      * Check the stack timer and return a boolean based on whether it has finished or not.
      * @return {boolean} - true if the stack timer has finished.
@@ -157,6 +163,30 @@ class BlockUtility {
             return;
         }
         this.sequencer.stepToProcedure(this.thread, procedureCode);
+    }
+    
+    /**
+     * Report a value to current thread.
+     * @param {*} value Reported value to push.
+     */
+    pushReportedValue (value) {
+        this.thread.pushReportedValue(value);
+    }
+
+    /**
+     * Push stack and update stack frames appropriately.
+     * @param {string} blockId Block ID to push to stack.
+     */
+    pushThreadStack (blockId) {
+        this.thread.pushStack(blockId);
+    }
+
+    /**
+     * Pop last block on the stack and its stack frame.
+     * @return {string} Block ID popped from the stack.
+     */
+    popThreadStack () {
+        return this.thread.popStack();
     }
 
     /**

@@ -240,6 +240,13 @@ class Sequencer {
             }
             // If no control flow has happened, switch to next block.
             if (thread.peekStack() === currentBlockId) {
+                // If current block is a return block, skip it.
+                const block = thread.target.blocks.getBlock(currentBlockId);
+                // Note: if current block is called from a monitor, the block will be undefined.
+                if (!block || block.opcode !== 'procedures_return') {
+                    thread.goToNextBlock();
+                }
+            } else if (thread.peekStackFrame() && thread.peekStackFrame().isExcuted) {
                 thread.goToNextBlock();
             }
             // If no next block has been found at this point, look on the stack.
@@ -274,6 +281,8 @@ class Sequencer {
                     // This level of the stack was waiting for a value.
                     // This means a reporter has just returned - so don't go
                     // to the next block for this level of the stack.
+                    return;
+                } else if (stackFrame.isCalling && !stackFrame.isExcuted) {
                     return;
                 }
                 // Get next block of existing block on the stack.

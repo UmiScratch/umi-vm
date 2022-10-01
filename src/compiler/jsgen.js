@@ -682,6 +682,35 @@ class JSGenerator {
 
         case 'var.get':
             return this.descendVariable(node.variable);
+        case 'procedures.call_return': {
+            const procedureCode = node.code;
+            const procedureVariant = node.variant;
+            // Do not generate any code for empty procedures.
+            const procedureData = this.ir.procedures[procedureVariant];
+            if (procedureData.stack === null) {
+                break;
+            }
+            let reporter = '';
+            if (procedureData.yields) {
+                reporter += 'yield* ';
+                if (!this.script.yields) {
+                    throw new Error('Script uses yielding procedure but is not marked as yielding.');
+                }
+            }
+            reporter += `thread.procedures["${sanitize(procedureVariant)}"](`;
+            // Only include arguments if the procedure accepts any.
+            if (procedureData.arguments.length) {
+                const args = [];
+                for (const input of node.arguments) {
+                    args.push(this.descendInput(input).asSafe());
+                }
+                reporter += args.join(',');
+            }
+            reporter += `)\n`;
+            // Variable input types may have changes after a procedure call.
+            this.resetVariableInputs();
+            return new TypedInput(reporter, TYPE_STRING);
+        }
 
         default:
             log.warn(`JS: Unknown input: ${node.kind}`, node);
@@ -1026,6 +1055,11 @@ class JSGenerator {
             this.source += `);\n`;
             // Variable input types may have changes after a procedure call.
             this.resetVariableInputs();
+            break;
+        }
+        
+        case 'procedures.return': {
+            this.source += `return ${this.descendInput(node.value).asString()};\n`;
             break;
         }
 

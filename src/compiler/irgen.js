@@ -652,6 +652,74 @@ class ScriptTreeGenerator {
             return {
                 kind: 'tw.lastKeyPressed'
             };
+        case 'procedures_call_return': {
+            // setting of yields will be handled later in the analysis phase
+
+            const procedureCode = block.mutation.proccode;
+            const paramNamesIdsAndDefaults = this.blocks.getProcedureParamNamesIdsAndDefaults(procedureCode);
+            if (paramNamesIdsAndDefaults === null) {
+                return {
+                    kind: 'noop'
+                };
+            }
+
+            const [paramNames, paramIds, paramDefaults] = paramNamesIdsAndDefaults;
+
+            const definitionId = this.blocks.getProcedureDefinition(procedureCode);
+            const definitionBlock = this.blocks.getBlock(definitionId);
+            if (!definitionBlock) {
+                return {
+                    kind: 'noop'
+                };
+            }
+            const innerDefinition = this.blocks.getBlock(definitionBlock.inputs.custom_block.block);
+
+            let isWarp = this.script.isWarp;
+            if (!isWarp) {
+                if (innerDefinition && innerDefinition.mutation) {
+                    const warp = innerDefinition.mutation.warp;
+                    if (typeof warp === 'boolean') {
+                        isWarp = warp;
+                    } else if (typeof warp === 'string') {
+                        isWarp = JSON.parse(warp);
+                    }
+                }
+            }
+
+            const variant = generateProcedureVariant(procedureCode, isWarp);
+
+            if (!this.script.dependedProcedures.includes(variant)) {
+                this.script.dependedProcedures.push(variant);
+            }
+
+            // Non-warp direct recursion yields.
+            if (!this.script.isWarp) {
+                if (procedureCode === this.script.procedureCode) {
+                    this.script.yields = true;
+                }
+            }
+
+            const args = [];
+            for (let i = 0; i < paramIds.length; i++) {
+                let value;
+                if (block.inputs[paramIds[i]] && block.inputs[paramIds[i]].block) {
+                    value = this.descendInputOfBlock(block, paramIds[i]);
+                } else {
+                    value = {
+                        kind: 'constant',
+                        value: paramDefaults[i]
+                    };
+                }
+                args.push(value);
+            }
+
+            return {
+                kind: 'procedures.call_return',
+                code: procedureCode,
+                variant,
+                arguments: args
+            };
+        }
 
         default: {
             const opcodeFunction = this.runtime.getOpcodeFunction(block.opcode);
@@ -1211,7 +1279,12 @@ class ScriptTreeGenerator {
                 arguments: args
             };
         }
-
+        case 'procedures_return': {
+            return {
+                kind: 'procedures.return',
+                value: this.descendInputOfBlock(block, 'VALUE')
+            };
+        }
         case 'sensing_resettimer':
             return {
                 kind: 'timer.reset'
@@ -1464,7 +1537,7 @@ class ScriptTreeGenerator {
 
         // If the top block is a hat, advance to its child.
         let entryBlock;
-        if (this.runtime.getIsHat(topBlock.opcode) || topBlock.opcode === 'procedures_definition') {
+        if (this.runtime.getIsHat(topBlock.opcode) || topBlock.opcode === 'procedures_definition'  || topBlock.opcode === 'procedures_definition_return') {
             if (this.runtime.getIsEdgeActivatedHat(topBlock.opcode)) {
                 throw new Error(`Not compiling an edge-activated hat: ${topBlock.opcode}`);
             }
