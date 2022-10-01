@@ -504,6 +504,29 @@ class VirtualMachine extends EventEmitter {
             }
         });
     }
+    
+    exportProjectSb3 () {
+        const soundDescs = serializeSounds(this.runtime);
+        const costumeDescs = serializeCostumes(this.runtime);
+        const projectJson = this.toJSON(undefined, undefined, true);
+
+        // TODO want to eventually move zip creation out of here, and perhaps
+        // into scratch-storage
+        const zip = new JSZip();
+
+        // Put everything in a zip file
+        zip.file('project.json', projectJson);
+        this._addFileDescsToZip(soundDescs.concat(costumeDescs), zip);
+
+        return zip.generateAsync({
+            type: 'blob',
+            mimeType: 'application/x.scratch.sb3',
+            compression: 'DEFLATE',
+            compressionOptions: {
+                level: 6 // Tradeoff between best speed (1) and best compression (9)
+            }
+        });
+    }
 
     /**
      * tw: Serailize the project into a map of files without actually zipping the project.
@@ -579,9 +602,9 @@ class VirtualMachine extends EventEmitter {
      * @param {*} serializationOptions Options to pass to the serializer
      * @return {string} Serialized state of the runtime.
      */
-    toJSON (optTargetId, serializationOptions) {
+    toJSON (optTargetId, serializationOptions, exportToSb3) {
         const sb3 = require('./serialization/sb3');
-        return StringUtil.stringify(sb3.serialize(this.runtime, optTargetId, serializationOptions));
+        return StringUtil.stringify(sb3.serialize(this.runtime, optTargetId, serializationOptions, exportToSb3));
     }
 
     // TODO do we still need this function? Keeping it here so as not to introduce

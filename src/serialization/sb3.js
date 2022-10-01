@@ -19,6 +19,7 @@ const compress = require('./tw-compress-sb3');
 
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
+const exportToSb3 = require('./export');
 const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js');
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -574,7 +575,7 @@ const serializeMonitors = function (monitors, runtime) {
  * @param {string=} targetId Optional target id if serializing only a single target
  * @return {object} Serialized runtime instance.
  */
-const serialize = function (runtime, targetId, {allowOptimization = true} = {}) {
+const serialize = function (runtime, targetId, {allowOptimization = true} = {}, exportTo) {
     // Fetch targets
     const obj = Object.create(null);
     // Create extension set to hold extension ids found while serializing targets
@@ -625,6 +626,10 @@ const serialize = function (runtime, targetId, {allowOptimization = true} = {}) 
 
     // Assemble payload and return
     obj.meta = meta;
+    
+    if (exportTo) {
+        exportToSb3(obj, runtime);
+    }
 
     if (allowOptimization) {
         compress(obj);
