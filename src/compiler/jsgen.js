@@ -690,7 +690,7 @@ class JSGenerator {
             if (procedureData.stack === null) {
                 break;
             }
-            let reporter = '';
+            let reporter = '(';
             if (procedureData.yields) {
                 reporter += 'yield* ';
                 if (!this.script.yields) {
@@ -706,7 +706,7 @@ class JSGenerator {
                 }
                 reporter += args.join(',');
             }
-            reporter += `)\n`;
+            reporter += `))`;
             // Variable input types may have changes after a procedure call.
             this.resetVariableInputs();
             return new TypedInput(reporter, TYPE_STRING);

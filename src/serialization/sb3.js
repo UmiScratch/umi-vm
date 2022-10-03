@@ -627,13 +627,9 @@ const serialize = function (runtime, targetId, {allowOptimization = true} = {}, 
     // Assemble payload and return
     obj.meta = meta;
     
-    if (exportTo) {
-        exportToSb3(obj, runtime);
-    }
+    if (exportTo) exportToSb3(obj, runtime);
 
-    if (allowOptimization) {
-        compress(obj);
-    }
+    if (allowOptimization) compress(obj);
 
     return obj;
 };
