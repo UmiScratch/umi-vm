@@ -25,7 +25,16 @@ const builtinExtensions = {
     boost: () => require('../extensions/scratch3_boost'),
     gdxfor: () => require('../extensions/scratch3_gdx_for'),
     // tw: core extension
-    tw: () => require('../extensions/tw')
+    tw: () => require('../extensions/tw'),
+    // Gitblock
+    lazyAudio: () => require('../extensions/gitblock_lazy_audio'),
+    canvas: () => require('../extensions/gitblock_canvas'),
+    battle: () => require('../extensions/gitblock_battle'),
+    js: () => require('../extensions/gitblock_js'),
+    stringExt: () => require('../extensions/gitblock_string_ext'),
+    puzzle: () => require('../extensions/gitblock_puzzle'),
+    community: () => require('../extensions/gitblock_community'),
+    kinect: () => require('../extensions/gitblock_kinect'),
 };
 
 /**
