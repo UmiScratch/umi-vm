@@ -35,6 +35,9 @@ const builtinExtensions = {
     puzzle: () => require('../extensions/gitblock_puzzle'),
     community: () => require('../extensions/gitblock_community'),
     kinect: () => require('../extensions/gitblock_kinect'),
+    // ClipCC
+    httpio: () => require('../extensions/clip_httpio'),
+    ccjson: () => require('../extensions/clipcc_json'),
 };
 
 /**
