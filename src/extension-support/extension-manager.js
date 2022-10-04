@@ -38,6 +38,8 @@ const builtinExtensions = {
     // ClipCC
     httpio: () => require('../extensions/clip_httpio'),
     ccjson: () => require('../extensions/clipcc_json'),
+    // Xiaomawang
+    xiaoma: () => require('../extensions/xiaoma'),
 };
 
 // CCW limited
