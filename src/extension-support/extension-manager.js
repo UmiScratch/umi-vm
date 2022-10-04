@@ -40,6 +40,9 @@ const builtinExtensions = {
     ccjson: () => require('../extensions/clipcc_json'),
 };
 
+// CCW limited
+const injectExtensions = {};
+
 /**
  * @typedef {object} ArgumentInfo - Information about an extension block argument
  * @property {ArgumentType} type - the type of value this argument can take
@@ -162,7 +165,7 @@ class ExtensionManager {
             return;
         }
 
-        const extension = builtinExtensions[extensionId]();
+        const extension = (builtinExtensions[extensionURL] || injectExtensions[extensionURL])();
         const extensionInstance = new extension(this.runtime);
         const serviceName = this._registerInternalExtension(extensionInstance);
         this._loadedExtensions.set(extensionId, serviceName);
@@ -175,7 +178,7 @@ class ExtensionManager {
      * @returns {Promise} resolved once the extension is loaded and initialized or rejected on failure
      */
     loadExtensionURL (extensionURL) {
-        if (builtinExtensions.hasOwnProperty(extensionURL)) {
+        if (builtinExtensions.hasOwnProperty(extensionURL) || injectExtensions.hasOwnProperty(extensionURL)) {
             /** @TODO dupe handling for non-builtin extensions. See commit 670e51d33580e8a2e852b3b038bb3afc282f81b9 */
             if (this.isExtensionLoaded(extensionURL)) {
                 const message = `Rejecting attempt to load a second extension with ID ${extensionURL}`;
@@ -191,14 +194,62 @@ class ExtensionManager {
             return Promise.resolve();
         }
 
+        /*
         this.loadingAsyncExtensions++;
-
+        
         return new Promise((resolve, reject) => {
             this.pendingExtensions.push({extensionURL, resolve, reject});
             this.createExtensionWorker()
                 .then(worker => dispatch.addWorker(worker))
                 .catch(error => reject(error));
         });
+        */
+        this.runtime.emit('EXTENSION_DATA_LOADING', true);
+        
+        return this.runtime.loadOnlineExtensionsLibrary() // ccw remote extensions library
+            .then(lib => lib.default())
+            .then(({default: remoteExtensions}) => {
+                const remoteExtensionConfig = remoteExtensions[extensionURL];
+                if (remoteExtensionConfig && remoteExtensionConfig.Extension) {
+                    return remoteExtensionConfig
+                        .Extension()
+                        .then(({default: remoteExtension}) => {
+                            const extensionInstance = new remoteExtension(this.runtime);
+                            const serviceName = this._registerInternalExtension(extensionInstance);
+                            this._loadedExtensions.set(extensionURL, serviceName);
+                            return Promise.resolve();
+                        });
+                }
+
+                // eslint-disable-next-line no-console
+                log.warn(`ccw: [${extensionURL}] not found in remote extensions library,try load as URL`);
+                this.runtime.emit('EXTENSION_NOT_FOUND', extensionURL);
+
+                // TW
+                this.loadingAsyncExtensions++;
+                return new Promise((resolve, reject) => {
+                    this.pendingExtensions.push({extensionURL, resolve, reject});
+                    this.createExtensionWorker()
+                        .then(worker => dispatch.addWorker(worker))
+                        .catch(error => reject(error));
+                });
+
+                // original
+                // return new Promise((resolve, reject) => {
+                //     // If we `require` this at the global level it breaks non-webpack targets, including tests
+                //     const ExtensionWorker = require('worker-loader?name=extension-worker.js!./extension-worker');
+
+                //     this.pendingExtensions.push({
+                //         extensionURL,
+                //         resolve,
+                //         reject
+                //     });
+                //     dispatch.addWorker(new ExtensionWorker());
+                // });
+            })
+            .finally(() => {
+                this.runtime.emit('EXTENSION_DATA_LOADING', false); // ccw end loading remote extension event
+            });
     }
 
     /**
@@ -529,6 +580,14 @@ class ExtensionManager {
         }
 
         return blockInfo;
+    }
+
+    // CCW Limited
+    injectExtension (extensionId, extension) {
+        if (builtinExtensions.hasOwnProperty(extensionId) || injectExtensions.hasOwnProperty(extensionId)) {
+            log.warn(`${extensionId} existed, replace it.`);
+        }
+        injectExtensions[extensionId] = () => extension;
     }
 }
 
