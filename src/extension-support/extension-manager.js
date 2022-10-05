@@ -211,10 +211,7 @@ class ExtensionManager {
         this.runtime.emit('EXTENSION_DATA_LOADING', true);
         
         return this.runtime.loadOnlineExtensionsLibrary() // ccw remote extensions library
-            .then(lib => {
-                if (lib && lib.default) lib.default();
-                else global.remoteExtensions = {};
-            })
+            .then(lib => lib.default())
             .then(({default: remoteExtensions}) => {
                 const remoteExtensionConfig = remoteExtensions[extensionURL];
                 if (remoteExtensionConfig && remoteExtensionConfig.Extension) {
