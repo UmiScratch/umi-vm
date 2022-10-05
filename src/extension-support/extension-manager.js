@@ -40,6 +40,8 @@ const builtinExtensions = {
     ccjson: () => require('../extensions/clipcc_json'),
     // Xiaomawang
     xiaoma: () => require('../extensions/xiaoma'),
+    // CCW
+    ccw: () => require('../extensions/ccw_compatibility'),
 };
 
 // CCW limited

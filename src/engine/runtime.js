@@ -107,6 +107,12 @@ const ArgumentTypeMap = (() => {
         // They are more analagous to the label on a block.
         fieldType: 'field_image'
     };
+    map[ArgumentType.CCW_HAT_PARAM] = {
+        shadow: {
+            type: 'ccw_hat_parameter',
+            fieldName: 'VALUE'
+        }
+    };
     return map;
 })();
 
@@ -1219,6 +1225,7 @@ class Runtime extends EventEmitter {
      * @private
      */
     _convertBlockForScratchBlocks (blockInfo, categoryInfo) {
+        if (this.debug) console.log(blockInfo, categoryInfo);
         const extendedOpcode = `${categoryInfo.id}_${blockInfo.opcode}`;
 
         const blockJSON = {

@@ -41,7 +41,12 @@ const ArgumentType = {
     /**
      * Inline image on block (as part of the label)
      */
-    IMAGE: 'image'
+    IMAGE: 'image',
+    
+    /**
+     * CCW: hat parameter
+     */
+     CCW_HAT_PARAM: 'ccw_hat_parameter'
 };
 
 module.exports = ArgumentType;
