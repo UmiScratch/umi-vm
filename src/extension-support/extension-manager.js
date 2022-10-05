@@ -410,6 +410,11 @@ class ExtensionManager {
                     result = '---';
                     break;
                 default: // an ExtensionBlockMetadata object
+                    // See https://github.com/CCW-Site/ccw-user-extension/blob/b534ce02b39a3e20c63f3a6c7485ef5429b375d8/Arkos/project.js#L198
+                    if (typeof blockInfo === 'string' && blockInfo.startsWith('---')) {
+                        result = blockInfo;
+                        break;
+                    }
                     result = this._prepareBlockInfo(serviceName, blockInfo);
                     break;
                 }

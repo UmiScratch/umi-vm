@@ -1199,6 +1199,10 @@ class Runtime extends EventEmitter {
         if (blockInfo === '---') {
             return this._convertSeparatorForScratchBlocks(blockInfo);
         }
+        
+        if (typeof blockInfo === 'string' && blockInfo.startsWith('---')) {
+            return this._convertTextAndSeparatorForScratchBlocks(blockInfo);
+        }
 
         if (blockInfo.blockType === BlockType.BUTTON) {
             return this._convertButtonForScratchBlocks(blockInfo);
@@ -1371,6 +1375,20 @@ class Runtime extends EventEmitter {
             xml: '<sep gap="36"/>'
         };
     }
+    
+    /**
+     * Generate a separator and text between blocks categories or sub-categories.
+     * @param {ExtensionBlockMetadata} blockInfo - the block to convert
+     * @param {CategoryInfo} categoryInfo - the category for this block
+     * @returns {ConvertedBlockInfo} - the converted & original block information
+     * @private
+     */
+    _convertTextAndSeparatorForScratchBlocks (blockInfo) {
+        return {
+            info: blockInfo,
+            xml: `<sep gap="36"/><label text="${blockInfo.slice(3).trim()}"></label>`
+        };
+    }
 
     /**
      * Convert a button for scratch-blocks. A button has no opcode but specifies a callback name in the `func` field.
@@ -1384,14 +1402,19 @@ class Runtime extends EventEmitter {
         // for now we only support these pre-defined callbacks handled in scratch-blocks
         const supportedCallbackKeys = ['MAKE_A_LIST', 'MAKE_A_PROCEDURE', 'MAKE_A_VARIABLE'];
         if (supportedCallbackKeys.indexOf(buttonInfo.func) < 0) {
-            log.error(`Custom button callbacks not supported yet: ${buttonInfo.func}`);
+            if (buttonInfo.onClick) {
+                console.log(`CCW custom callback`, buttonInfo.onClick);
+                window.toolboxWorkspace.registerButtonCallback(buttonInfo.text, buttonInfo.onClick);
+            } else {
+                log.error(`{Custom button callbacks not supported yet}: ${buttonInfo.func}`);
+            }
         }
 
         const extensionMessageContext = this.makeMessageContextForTarget();
         const buttonText = maybeFormatMessage(buttonInfo.text, extensionMessageContext);
         return {
             info: buttonInfo,
-            xml: `<button text="${buttonText}" callbackKey="${buttonInfo.func}"></button>`
+            xml: `<button text="${buttonText}" callbackKey="${buttonInfo.onClick ? buttonInfo.text : buttonInfo.func}"></button>`
         };
     }
 
