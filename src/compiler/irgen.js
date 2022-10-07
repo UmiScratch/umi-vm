@@ -110,6 +110,18 @@ class ScriptTreeGenerator {
     }
 
     getBlockInfo (fullOpcode) {
+        // cc - Provides generation support for id systems that contain ".".
+        if (fullOpcode.indexOf('.') !== -1) {
+            for (const ext of this.runtime._blockInfo) {
+                for (const blockInfo of ext.blocks) {
+                    if (blockInfo.info.opcode === fullOpcode) {
+                        return blockInfo;
+                    }
+                }
+            }
+            return null;
+        }
+        
         const [category, opcode] = StringUtil.splitFirst(fullOpcode, '_');
         if (!category || !opcode) {
             return null;
