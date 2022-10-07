@@ -33,6 +33,7 @@ const getReporters = function (blocks) {
 
 const convertUnknownBlocks = (blockId, blocks, reporters) => {
     const block = blocks[blockId];
+    if (!block || !block.opcode) return;
     const [extensionId] = block.opcode.split('_');
     
     if (INTERNAL_EXTENSIONS.includes(extensionId) && !blacklistOpcode.includes(block.opcode)) return;
@@ -104,7 +105,7 @@ const walkStack = (entryBlockId, blocks) => {
 };
 
 const exportToSb3 = (projectData, runtime) => {
-    console.log(projectData);
+    if (runtime.debug) console.log(projectData);
     
     for (const target of projectData.targets) {
         const reporters = getReporters(target.blocks);
@@ -113,6 +114,9 @@ const exportToSb3 = (projectData, runtime) => {
             convertUnknownBlocks(blockId, target.blocks, reporters);
         }
     }
+    
+    // unnecessary to store extensions
+    if (projectData.extensions) projectData.extensions = [];
 };
 
 module.exports = exportToSb3;

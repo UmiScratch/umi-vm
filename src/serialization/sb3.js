@@ -20,6 +20,7 @@ const compress = require('./tw-compress-sb3');
 const {loadCostume} = require('../import/load-costume.js');
 const {loadSound} = require('../import/load-sound.js');
 const exportToSb3 = require('./export');
+const importFromSb3 = require('./import');
 const {deserializeCostume, deserializeSound} = require('./deserialize-assets.js');
 
 const hasOwnProperty = Object.prototype.hasOwnProperty;
@@ -1301,6 +1302,7 @@ const replaceUnsafeCharsInVariableIds = function (targets) {
  * @returns {Promise.<ImportedProject>} Promise that resolves to the list of targets after the project is deserialized
  */
 const deserialize = function (json, runtime, zip, isSingleSprite) {
+    importFromSb3(json, runtime, zip, isSingleSprite);
     const extensions = {
         extensionIDs: new Set(),
         extensionURLs: new Map()
